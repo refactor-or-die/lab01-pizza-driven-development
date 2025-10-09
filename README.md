@@ -138,9 +138,7 @@ lab01-pizza-driven-development/
 ├── .gitignore                         # Ignorowane pliki
 ├── requirements.txt                   # Zależności Python
 ├── slides/                            # Prezentacja wprowadzająca
-│   ├── facade_intro.tex
-│   ├── facade_intro.pdf
-│   └── facade_diagram.png
+│   └── facade_intro.pdf
 ├── src/
 │   └── pizza_order_system.py         # Kod do refaktoryzacji
 └── tests/
