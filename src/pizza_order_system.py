@@ -4,17 +4,6 @@ System zamówień pizzy - wersja PRZED refaktoryzacją z użyciem wzorca Facade.
 Kod jest skomplikowany, klient musi znać wszystkie podsystemy i kolejność wywołań.
 """
 
-"""
-Stary kod funkcji "place_pizza_order" umieściliśmy w "old_place_pizza_order", następnie stworzyliśmy
-klasę PizzaOrderFacade, która ma jedną metodę "place_order", która wywoływała "old_place_pizza_order" 
-przekazując wynik na wyjście. następnie funkcja nowa "place_pizza_order" tworzy obiekt PizzaOrderFacade,
-wywołuje na nim "place_order" i zwraza jej wyjście.
-"""
-
-class PizzaOrderFacade:
-    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
-        return old_place_pizza_order(pizza_type, address, delivery_time, card_number, user_id)
-
 class InventoryManager:
     """Zarządza stanem magazynowym składników."""
     
