@@ -79,10 +79,12 @@ Zrefaktoryzuj kod używając wzorca **Facade**:
 
 ## Instalacja i uruchomienie
 
-### 1. Sklonuj repozytorium
+### 1. Zrób swojego forka tego repozytorium
+
+### 2. Sklonuj repozytorium
 
 ```bash
-git clone https://github.com/refactor-or-die/lab01-pizza-driven-development.git
+git clone https://github.com/[WASZE KONTO]/lab01-pizza-driven-development.git
 cd lab01-pizza-driven-development
 ```
 
@@ -131,6 +133,8 @@ git add .
 git commit -m "Refaktoryzacja z użyciem wzorca Facade"
 git push origin lab01_nazwisko1_nazwisko2
 ```
+
+### 8. Zróbcie PULL REQUEST do oryginalnego (mojego) repo
 
 ## Kryteria zaliczenia
 
