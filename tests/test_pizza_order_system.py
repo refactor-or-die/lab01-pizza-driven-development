@@ -58,7 +58,7 @@ def test_unavailable_pizza():
     )
     
     assert result["success"] is False
-    assert "Nieznany typ pizzy" in result["error"]
+    assert "nie jest dostępna" in result["error"]
 
 
 def test_inventory_manager():
