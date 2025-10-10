@@ -5,7 +5,7 @@ Testy powinny przechodzić zarówno PRZED jak i PO refaktoryzacji.
 """
 
 import pytest
-from pizza_order_system import (
+from src.pizza_order_system import (
     place_pizza_order,
     InventoryManager,
     PaymentProcessor,
