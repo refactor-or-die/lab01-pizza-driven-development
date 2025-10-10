@@ -98,10 +98,20 @@ git checkout -b lab01_nazwisko1_nazwisko2
 pip install -r requirements.txt
 ```
 
-### 4. Uruchom testy (powinny przejść przed refaktoryzacją)
+### 4. Uruchom testy:
 
 ```bash
 pytest tests/ -v
+```
+lub:
+
+```bash
+python3 -m pytest tests/ -v
+```
+lub:
+
+```bash
+python -m pytest tests/ -v
 ```
 
 ### 5. Refaktoryzuj kod
