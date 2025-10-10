@@ -4,21 +4,22 @@ System zamówień pizzy - wersja PRZED refaktoryzacją z użyciem wzorca Facade.
 Kod jest skomplikowany, klient musi znać wszystkie podsystemy i kolejność wywołań.
 """
 
+
 class InventoryManager:
     """Zarządza stanem magazynowym składników."""
-    
+
     def __init__(self):
         self.inventory = {
             "Margherita": 10,
             "Pepperoni": 8,
             "Vegetariana": 5,
-            "Capricciosa": 3
+            "Capricciosa": 3,
         }
-    
+
     def check_availability(self, pizza_type):
         """Sprawdza czy pizza jest dostępna w magazynie."""
         return self.inventory.get(pizza_type, 0) > 0
-    
+
     def reserve_pizza(self, pizza_type):
         """Rezerwuje pizzę (zmniejsza stan magazynowy)."""
         if self.check_availability(pizza_type):
@@ -29,14 +30,14 @@ class InventoryManager:
 
 class PaymentProcessor:
     """Przetwarza płatności kartą."""
-    
+
     def __init__(self):
         self.valid_cards = ["1234-5678", "8765-4321", "1111-2222"]
-    
+
     def validate_card(self, card_number):
         """Sprawdza czy karta jest poprawna."""
         return card_number in self.valid_cards
-    
+
     def process_payment(self, card_number, amount):
         """Przetwarza płatność."""
         if self.validate_card(card_number):
@@ -47,31 +48,29 @@ class PaymentProcessor:
 
 class DeliveryScheduler:
     """Planuje dostawy."""
-    
+
     def __init__(self):
         self.deliveries = []
-    
+
     def schedule_delivery(self, address, delivery_time):
         """Planuje dostawę na określony czas."""
         delivery_id = len(self.deliveries) + 1
-        self.deliveries.append({
-            "id": delivery_id,
-            "address": address,
-            "time": delivery_time
-        })
+        self.deliveries.append(
+            {"id": delivery_id, "address": address, "time": delivery_time}
+        )
         return delivery_id
 
 
 class LoyaltyPointsCalculator:
     """Zarządza punktami lojalnościowymi."""
-    
+
     def __init__(self):
         self.user_points = {}
-    
+
     def calculate_points(self, amount):
         """Oblicza punkty: 1 punkt za każde 10 zł."""
         return int(amount / 10)
-    
+
     def add_points(self, user_id, amount):
         """Dodaje punkty użytkownikowi."""
         points = self.calculate_points(amount)
@@ -83,27 +82,23 @@ class LoyaltyPointsCalculator:
 
 class NotificationService:
     """Wysyła powiadomienia do klientów."""
-    
+
     def __init__(self):
         self.sent_notifications = []
-    
+
     def send_sms(self, user_id, message):
         """Wysyła SMS do użytkownika."""
-        notification = {
-            "user_id": user_id,
-            "type": "SMS",
-            "message": message
-        }
+        notification = {"user_id": user_id, "type": "SMS", "message": message}
         self.sent_notifications.append(notification)
         return True
-    
+
     def send_email(self, user_id, subject, message):
         """Wysyła email do użytkownika."""
         notification = {
             "user_id": user_id,
             "type": "EMAIL",
             "subject": subject,
-            "message": message
+            "message": message,
         }
         self.sent_notifications.append(notification)
         return True
@@ -111,23 +106,86 @@ class NotificationService:
 
 class PriceCalculator:
     """Oblicza ceny pizzy."""
-    
+
     def __init__(self):
         self.prices = {
             "Margherita": 25.0,
             "Pepperoni": 30.0,
             "Vegetariana": 28.0,
-            "Capricciosa": 32.0
+            "Capricciosa": 32.0,
         }
-    
+
     def get_price(self, pizza_type):
         """Zwraca cenę pizzy."""
         return self.prices.get(pizza_type, 0.0)
 
 
+class PizzaOrderingFacade:
+    def __init__(self):
+        self._inventory_manager = InventoryManager()
+        self._price_calculator = PriceCalculator()
+        self._payment_processor = PaymentProcessor()
+        self._delivery_scheduler = DeliveryScheduler()
+        self._loyalty_points_calculator = LoyaltyPointsCalculator()
+        self._notification_service = NotificationService()
+
+    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
+        # Krok 1: Sprawdź dostępność w magazynie
+        if not self._inventory_manager.check_availability(pizza_type):
+            return {
+                "success": False,
+                "error": f"Pizza {pizza_type} nie jest dostępna w magazynie",
+            }
+
+        # Krok 2: Oblicz cenę
+        price = self._price_calculator.get_price(pizza_type)
+        if price == 0.0:
+            return {"success": False, "error": f"Nieznany typ pizzy: {pizza_type}"}
+
+        # Krok 3: Przetworz płatność
+        if not self._payment_processor.process_payment(card_number, price):
+            return {
+                "success": False,
+                "error": "Płatność odrzucona - nieprawidłowy numer karty",
+            }
+
+        # Krok 4: Zarezerwuj pizzę w magazynie
+        if not self._inventory_manager.reserve_pizza(pizza_type):
+            return {"success": False, "error": "Nie udało się zarezerwować pizzy"}
+
+        # Krok 5: Zaplanuj dostawę
+        delivery_id = self._delivery_scheduler.schedule_delivery(address, delivery_time)
+
+        # Krok 6: Dodaj punkty lojalnościowe
+        points_earned = self._loyalty_points_calculator.add_points(user_id, price)
+
+        # Krok 7: Wyślij powiadomienie SMS
+        self._notification_service.send_sms(
+            user_id,
+            f"Zamówienie pizzy {pizza_type} potwierdzone! Dostawa: {delivery_time}",
+        )
+
+        # Krok 8: Wyślij email z potwierdzeniem
+        self._notification_service.send_email(
+            user_id,
+            "Potwierdzenie zamówienia",
+            f"Twoje zamówienie #{delivery_id} zostało przyjęte. Dostawa na {address} o {delivery_time}.",
+        )
+
+        return {
+            "success": True,
+            "order_id": delivery_id,
+            "pizza_type": pizza_type,
+            "price": price,
+            "points_earned": points_earned,
+            "delivery_time": delivery_time,
+        }
+
+
 # ============================================
-# FUNKCJA KLIENCKA - TO JEST MASAKRA!
+# FUNKCJA KLIENCKA - TO już nie JEST MASAKRA!
 # ============================================
+
 
 def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
     facade = PizzaOrderFacade()
