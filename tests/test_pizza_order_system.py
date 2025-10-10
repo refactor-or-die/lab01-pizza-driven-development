@@ -5,7 +5,7 @@ Testy powinny przechodzić zarówno PRZED jak i PO refaktoryzacji.
 """
 
 import pytest
-from pizza_order_system import (
+from src.pizza_order_system import (
     place_pizza_order,
     InventoryManager,
     PaymentProcessor,
@@ -58,7 +58,7 @@ def test_unavailable_pizza():
     )
     
     assert result["success"] is False
-    assert "Nieznany typ pizzy" in result["error"]
+    assert "nie jest dostępna" in result["error"]
 
 
 def test_inventory_manager():
