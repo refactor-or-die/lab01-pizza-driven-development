@@ -6,7 +6,7 @@ Kod jest skomplikowany, klient musi znać wszystkie podsystemy i kolejność wyw
 
 class InventoryManager:
     """Zarządza stanem magazynowym składników."""
-    
+
     def __init__(self):
         self.inventory = {
             "Margherita": 10,
@@ -14,11 +14,11 @@ class InventoryManager:
             "Vegetariana": 5,
             "Capricciosa": 3
         }
-    
+
     def check_availability(self, pizza_type):
         """Sprawdza czy pizza jest dostępna w magazynie."""
         return self.inventory.get(pizza_type, 0) > 0
-    
+
     def reserve_pizza(self, pizza_type):
         """Rezerwuje pizzę (zmniejsza stan magazynowy)."""
         if self.check_availability(pizza_type):
@@ -29,14 +29,14 @@ class InventoryManager:
 
 class PaymentProcessor:
     """Przetwarza płatności kartą."""
-    
+
     def __init__(self):
         self.valid_cards = ["1234-5678", "8765-4321", "1111-2222"]
-    
+
     def validate_card(self, card_number):
         """Sprawdza czy karta jest poprawna."""
         return card_number in self.valid_cards
-    
+
     def process_payment(self, card_number, amount):
         """Przetwarza płatność."""
         if self.validate_card(card_number):
@@ -47,10 +47,10 @@ class PaymentProcessor:
 
 class DeliveryScheduler:
     """Planuje dostawy."""
-    
+
     def __init__(self):
         self.deliveries = []
-    
+
     def schedule_delivery(self, address, delivery_time):
         """Planuje dostawę na określony czas."""
         delivery_id = len(self.deliveries) + 1
@@ -64,14 +64,14 @@ class DeliveryScheduler:
 
 class LoyaltyPointsCalculator:
     """Zarządza punktami lojalnościowymi."""
-    
+
     def __init__(self):
         self.user_points = {}
-    
+
     def calculate_points(self, amount):
         """Oblicza punkty: 1 punkt za każde 10 zł."""
         return int(amount / 10)
-    
+
     def add_points(self, user_id, amount):
         """Dodaje punkty użytkownikowi."""
         points = self.calculate_points(amount)
@@ -83,10 +83,10 @@ class LoyaltyPointsCalculator:
 
 class NotificationService:
     """Wysyła powiadomienia do klientów."""
-    
+
     def __init__(self):
         self.sent_notifications = []
-    
+
     def send_sms(self, user_id, message):
         """Wysyła SMS do użytkownika."""
         notification = {
@@ -96,7 +96,7 @@ class NotificationService:
         }
         self.sent_notifications.append(notification)
         return True
-    
+
     def send_email(self, user_id, subject, message):
         """Wysyła email do użytkownika."""
         notification = {
@@ -111,7 +111,7 @@ class NotificationService:
 
 class PriceCalculator:
     """Oblicza ceny pizzy."""
-    
+
     def __init__(self):
         self.prices = {
             "Margherita": 25.0,
@@ -119,81 +119,84 @@ class PriceCalculator:
             "Vegetariana": 28.0,
             "Capricciosa": 32.0
         }
-    
+
     def get_price(self, pizza_type):
         """Zwraca cenę pizzy."""
         return self.prices.get(pizza_type, 0.0)
 
 
-# ============================================
-# FUNKCJA KLIENCKA - TO JEST MASAKRA!
-# ============================================
+class PizzaOrderFacade:
+    """Fasada upraszczająca proces zamówienia pizzy."""
+
+    def __init__(self):
+        self.inventory = InventoryManager()
+        self.price_calc = PriceCalculator()
+        self.payment = PaymentProcessor()
+        self.delivery = DeliveryScheduler()
+        self.loyalty = LoyaltyPointsCalculator()
+        self.notifications = NotificationService()
+
+    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
+        """Realizuje pełny proces zamówienia pizzy."""
+
+        # 1. Sprawdzenie dostępności
+        if not self.inventory.check_availability(pizza_type):
+            return {
+                "success": False,
+                "error": f"Pizza {pizza_type} nie jest dostępna w magazynie"
+            }
+
+        # 2. Pobranie ceny
+        price = self.price_calc.get_price(pizza_type)
+        if price == 0.0:
+            return {
+                "success": False,
+                "error": f"Nieznany typ pizzy: {pizza_type}"
+            }
+
+        # 3. Płatność
+        if not self.payment.process_payment(card_number, price):
+            return {
+                "success": False,
+                "error": "Płatność odrzucona - nieprawidłowy numer karty"
+            }
+
+        # 4. Rezerwacja pizzy
+        if not self.inventory.reserve_pizza(pizza_type):
+            return {
+                "success": False,
+                "error": "Nie udało się zarezerwować pizzy"
+            }
+
+        # 5. Planowanie dostawy
+        delivery_id = self.delivery.schedule_delivery(address, delivery_time)
+
+        # 6. Punkty lojalnościowe
+        points_earned = self.loyalty.add_points(user_id, price)
+
+        # 7. Powiadomienia
+        self.notifications.send_sms(
+            user_id,
+            f"Zamówienie pizzy {pizza_type} potwierdzone! Dostawa: {delivery_time}"
+        )
+        self.notifications.send_email(
+            user_id,
+            "Potwierdzenie zamówienia",
+            f"Twoje zamówienie #{delivery_id} zostało przyjęte. Dostawa na {address} o {delivery_time}."
+        )
+
+        # 8. Zwrócenie podsumowania
+        return {
+            "success": True,
+            "order_id": delivery_id,
+            "pizza_type": pizza_type,
+            "price": price,
+            "points_earned": points_earned,
+            "delivery_time": delivery_time
+        }
+
 
 def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
-    """
-    Funkcja kliencka do składania zamówienia pizzy.
-    UWAGA: Ta funkcja jest skomplikowana i wymaga znajomości wszystkich podsystemów!
-    """
-    
-    # Krok 1: Sprawdź dostępność w magazynie
-    inventory = InventoryManager()
-    if not inventory.check_availability(pizza_type):
-        return {
-            "success": False,
-            "error": f"Pizza {pizza_type} nie jest dostępna w magazynie"
-        }
-    
-    # Krok 2: Oblicz cenę
-    price_calc = PriceCalculator()
-    price = price_calc.get_price(pizza_type)
-    if price == 0.0:
-        return {
-            "success": False,
-            "error": f"Nieznany typ pizzy: {pizza_type}"
-        }
-    
-    # Krok 3: Przetworz płatność
-    payment = PaymentProcessor()
-    if not payment.process_payment(card_number, price):
-        return {
-            "success": False,
-            "error": "Płatność odrzucona - nieprawidłowy numer karty"
-        }
-    
-    # Krok 4: Zarezerwuj pizzę w magazynie
-    if not inventory.reserve_pizza(pizza_type):
-        return {
-            "success": False,
-            "error": "Nie udało się zarezerwować pizzy"
-        }
-    
-    # Krok 5: Zaplanuj dostawę
-    delivery = DeliveryScheduler()
-    delivery_id = delivery.schedule_delivery(address, delivery_time)
-    
-    # Krok 6: Dodaj punkty lojalnościowe
-    loyalty = LoyaltyPointsCalculator()
-    points_earned = loyalty.add_points(user_id, price)
-    
-    # Krok 7: Wyślij powiadomienie SMS
-    notifications = NotificationService()
-    notifications.send_sms(
-        user_id,
-        f"Zamówienie pizzy {pizza_type} potwierdzone! Dostawa: {delivery_time}"
-    )
-    
-    # Krok 8: Wyślij email z potwierdzeniem
-    notifications.send_email(
-        user_id,
-        "Potwierdzenie zamówienia",
-        f"Twoje zamówienie #{delivery_id} zostało przyjęte. Dostawa na {address} o {delivery_time}."
-    )
-    
-    return {
-        "success": True,
-        "order_id": delivery_id,
-        "pizza_type": pizza_type,
-        "price": price,
-        "points_earned": points_earned,
-        "delivery_time": delivery_time
-    }
+    facade = PizzaOrderFacade()
+    return facade.place_order(pizza_type, address, delivery_time, card_number, user_id)
+
