@@ -4,6 +4,10 @@ System zamówień pizzy - wersja PRZED refaktoryzacją z użyciem wzorca Facade.
 Kod jest skomplikowany, klient musi znać wszystkie podsystemy i kolejność wywołań.
 """
 
+class PizzaOrderFacade:
+    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
+        return old_place_pizza_order(pizza_type, address, delivery_time, card_number, user_id)
+
 class InventoryManager:
     """Zarządza stanem magazynowym składników."""
     
@@ -129,7 +133,7 @@ class PriceCalculator:
 # FUNKCJA KLIENCKA - TO JEST MASAKRA!
 # ============================================
 
-def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
+def old_place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
     """
     Funkcja kliencka do składania zamówienia pizzy.
     UWAGA: Ta funkcja jest skomplikowana i wymaga znajomości wszystkich podsystemów!
@@ -197,3 +201,8 @@ def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
         "points_earned": points_earned,
         "delivery_time": delivery_time
     }
+
+def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
+    order_placer = PizzaOrderFacade()
+    return order_placer.place_order(pizza_type, address, delivery_time, card_number, user_id)
+
