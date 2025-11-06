@@ -124,77 +124,69 @@ class PriceCalculator:
         """Zwraca cenę pizzy."""
         return self.prices.get(pizza_type, 0.0)
 
-
 # ============================================
-# FUNKCJA KLIENCKA - TO JEST MASAKRA!
+# KLASA FASADA
 # ============================================
-
-def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
-    facade = PizzaOrderFacade()
-    return facade.place_pizza_order(pizza_type,address,delivery_time,card_number,user_id)
-
-
 class PizzaOrderFacade:
-    def place_pizza_order(self,pizza_type, address, delivery_time, card_number, user_id):
-        """
-        Funkcja kliencka do składania zamówienia pizzy.
-        UWAGA: Ta funkcja jest skomplikowana i wymaga znajomości wszystkich podsystemów!
-        """
+    def __init__(self):
+        self.inventory = InventoryManager()
+        self.price_calc = PriceCalculator()
+        self.payment = PaymentProcessor()
+        self.delivery = DeliveryScheduler()
+        self.loyalty = LoyaltyPointsCalculator()
+        self.notifications = NotificationService()
+        
 
+    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
         # Krok 1: Sprawdź dostępność w magazynie
-        inventory = InventoryManager()
-        if not inventory.check_availability(pizza_type):
-            return {
+        if not self.inventory.check_availability(pizza_type):
+            return{
                 "success": False,
                 "error": f"Pizza {pizza_type} nie jest dostępna w magazynie"
             }
-
         # Krok 2: Oblicz cenę
-        price_calc = PriceCalculator()
-        price = price_calc.get_price(pizza_type)
+        price = self.price_calc.get_price(pizza_type)
         if price == 0.0:
             return {
                 "success": False,
                 "error": f"Nieznany typ pizzy: {pizza_type}"
             }
-
+  
+  
         # Krok 3: Przetworz płatność
-        payment = PaymentProcessor()
-        if not payment.process_payment(card_number, price):
+        if not self.payment.process_payment(card_number, price):
             return {
                 "success": False,
                 "error": "Płatność odrzucona - nieprawidłowy numer karty"
             }
-
+        
         # Krok 4: Zarezerwuj pizzę w magazynie
-        if not inventory.reserve_pizza(pizza_type):
+        if not self.inventory.reserve_pizza(pizza_type):
             return {
                 "success": False,
                 "error": "Nie udało się zarezerwować pizzy"
             }
-
+        
         # Krok 5: Zaplanuj dostawę
-        delivery = DeliveryScheduler()
-        delivery_id = delivery.schedule_delivery(address, delivery_time)
-
+        delivery_id = self.delivery.schedule_delivery(address, delivery_time)
+        
         # Krok 6: Dodaj punkty lojalnościowe
-        loyalty = LoyaltyPointsCalculator()
-        points_earned = loyalty.add_points(user_id, price)
-
+        points_earned = self.loyalty.add_points(user_id, price)
+        
         # Krok 7: Wyślij powiadomienie SMS
-        notifications = NotificationService()
-        notifications.send_sms(
+        self.notifications.send_sms(
             user_id,
             f"Zamówienie pizzy {pizza_type} potwierdzone! Dostawa: {delivery_time}"
         )
-
+        
         # Krok 8: Wyślij email z potwierdzeniem
-        notifications.send_email(
+        self.notifications.send_email(
             user_id,
             "Potwierdzenie zamówienia",
             f"Twoje zamówienie #{delivery_id} zostało przyjęte. Dostawa na {address} o {delivery_time}."
         )
-
+        
+        # Wielki sukces zarządu
         return {
             "success": True,
             "order_id": delivery_id,
@@ -204,4 +196,17 @@ class PizzaOrderFacade:
             "delivery_time": delivery_time
         }
 
+# ============================================
+# FUNKCJA KLIENCKA - TO JEST MASAKRA!
+# ============================================
 
+def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
+    wielka_fasada = PizzaOrderFacade()
+    return wielka_fasada.place_order(pizza_type, address, delivery_time, card_number, user_id)
+    
+    
+    
+    
+    
+    
+    
