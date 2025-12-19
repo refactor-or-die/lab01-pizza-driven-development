@@ -4,6 +4,59 @@ System zamówień pizzy - wersja PRZED refaktoryzacją z użyciem wzorca Facade.
 Kod jest skomplikowany, klient musi znać wszystkie podsystemy i kolejność wywołań.
 """
 
+class PizzaOrderFacade:
+    def __init__(self):
+        self.inventory = InventoryManager()
+        self.payment = PaymentProcessor()
+        self.delivery = DeliveryScheduler()
+        self.loyalty = LoyaltyPointsCalculator()
+        self.notifications = NotificationService()
+        self.price_calc = PriceCalculator()
+        
+    def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
+        if not self.inventory.check_availability(pizza_type):
+            return {
+            "success": False,
+            "error": f"Pizza {pizza_type} nie jest dostępna w magazynie"
+            }
+        price = self.price_calc.get_price(pizza_type)
+        if price == 0.0:
+            return {
+            "success": False,
+            "error": f"Nieznany typ pizzy: {pizza_type}"
+            }
+        if not self.payment.process_payment(card_number, price):
+            return {
+            "success": False,
+            "error": "Płatność odrzucona - nieprawidłowy numer karty"
+            }
+        if not self.inventory.reserve_pizza(pizza_type):
+            return {
+            "success": False,
+            "error": "Nie udało się zarezerwować pizzy"
+            }
+        
+        delivery_id = self.delivery.schedule_delivery(address, delivery_time)
+        points_earned = self.loyalty.add_points(user_id, price)
+        self.notifications.send_sms(
+        user_id,
+        f"Zamówienie pizzy {pizza_type} potwierdzone! Dostawa: {delivery_time}"
+        )
+        self.notifications.send_email(
+        user_id,
+        "Potwierdzenie zamówienia",
+        f"Twoje zamówienie #{delivery_id} zostało przyjęte. Dostawa na {address} o {delivery_time}."
+        )
+        return {
+        "success": True,
+        "order_id": delivery_id,
+        "pizza_type": pizza_type,
+        "price": price,
+        "points_earned": points_earned,
+        "delivery_time": delivery_time
+        }
+        
+
 class InventoryManager:
     """Zarządza stanem magazynowym składników."""
     
@@ -130,11 +183,14 @@ class PriceCalculator:
 # ============================================
 
 def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
+    pizzaorder = PizzaOrderFacade()
+    return pizzaorder.place_order(pizza_type, address, delivery_time, card_number, user_id)
+    
     """
     Funkcja kliencka do składania zamówienia pizzy.
     UWAGA: Ta funkcja jest skomplikowana i wymaga znajomości wszystkich podsystemów!
     """
-    
+    """
     # Krok 1: Sprawdź dostępność w magazynie
     inventory = InventoryManager()
     if not inventory.check_availability(pizza_type):
@@ -197,3 +253,5 @@ def place_pizza_order(pizza_type, address, delivery_time, card_number, user_id):
         "points_earned": points_earned,
         "delivery_time": delivery_time
     }
+    """
+    
