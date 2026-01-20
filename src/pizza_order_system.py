@@ -17,7 +17,7 @@ class InventoryManager:
     
     def check_availability(self, pizza_type):
         """Sprawdza czy pizza jest dostępna w magazynie."""
-        return self.inventory.get(pizza_type, 0) > 0
+        return pizza_type in self.inventory and self.inventory.get(pizza_type, 0) > 0
     
     def reserve_pizza(self, pizza_type):
         """Rezerwuje pizzę (zmniejsza stan magazynowy)."""
