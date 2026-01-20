@@ -14,10 +14,12 @@ class InventoryManager:
             "Vegetariana": 5,
             "Capricciosa": 3
         }
+    def check_existence(self, pizza_type):
+        return pizza_type in self.inventory
     
     def check_availability(self, pizza_type):
         """Sprawdza czy pizza jest dostępna w magazynie."""
-        return pizza_type in self.inventory and self.inventory.get(pizza_type, 0) > 0
+        return self.inventory.get(pizza_type, 0) > 0
     
     def reserve_pizza(self, pizza_type):
         """Rezerwuje pizzę (zmniejsza stan magazynowy)."""
@@ -126,6 +128,14 @@ class PriceCalculator:
 
 class PizzaOrderFacade:
     def place_order(self, pizza_type, address, delivery_time, card_number, user_id):
+        # Krok 0: Sprawdz, czy pizza istnieje
+        inventory = InventoryManager()
+        if not inventory.check_existence(pizza_type):
+            return {
+                "success": False,
+                "error": f"Nieznany typ pizzy - pizza {pizza_type} nie istnieje!"
+            }
+
         # Krok 1: Sprawdź dostępność w magazynie
         inventory = InventoryManager()
         if not inventory.check_availability(pizza_type):
